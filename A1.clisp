@@ -1,0 +1,151 @@
+
+(defun make-sum(c1 c2) 
+	(cond ((and (numberp (car c1)) 
+			(numberp (car c2)) 
+				(eq (car c1) (car c2))) (list (car c1) (+ (cadr c1) (cadr c2))))
+		((= 0 (car c1)) (cadr c1))
+		((= 0 (car c2)) (cadr c2))
+		(t (list c1 c2))))
+ 
+
+(defun detect_repetition(L) 
+	(cond ((null (cdr L)) L)
+		((eq (caadr L) (caar L)) 
+			(cons (list (caar L) (+ (cadr(car L)) (cadr(cadr L)))) (detect_repetition (cddr L))))
+		(t L)))
+
+(defun poly-add(p1 p2) 
+	(cond ((null p1) p2)
+			((null p2) p1)
+		(t (cons (make-sum(car p1) (car  p2))
+			(poly-add(cdr p1) (cdr p2))))))
+
+
+(defun make-sub(c1 c2) 
+	(cond ((and (numberp (car c1)) 
+			(numberp (car c2)) 
+			(eq (car c1) (car c2))) 
+				(list (car c1) (+ (cadr c1) (- 0 (cadr c2)))))
+		((= 0 (car c1)) (cadr c1))
+		((= 0 (car c2)) (cadr c2))
+		(t (list c1 c2))))
+
+(defun poly-sub(p1 p2) 
+	(cond ((null p1) p2)
+		((null p2) p1)
+		(t (cons (make-sub(car p1) (car p2))
+			(poly-sub(cdr p1) (cdr p2))))))
+
+(defun plus-function(c1 c2)
+	(+ c1 c2))
+
+(defun multiply-function(c1 c2)
+	(* c1 c2))
+
+(defun divide-function(c1 c2)
+	(/ c1 c2))
+
+(defun minus-one(c1) 
+	(- c1 1))
+
+(defun plus-one(c1)
+	(+ c1 1))
+
+(defun one-multiply-poly(S L) 
+	(cond ((null (cdr L)) L)
+		(t (cons (list (+ (car S) (caar L)) (* (cadr S) (cadr(car L)))) (one-multiply-poly S (cdr L))))))
+
+(defun multiply-poly (p1 p2)
+	(cond ((null p1) p1)
+		(t (detect_repetition(poly-add (one-multiply-poly(car p1) p2) (multiply-poly (cdr p1) p2))))))
+
+(defun poly-multiply(L1 L2) 
+	(cond ((null (cddr L1)) (cdr L1))
+		(t (poly-add (cons(detect_repetition (poly-multiply-one L1 L2)) (detect_repetition (poly-multiply-one (cdr L1) L2))) (poly-multiply(cdr L1) L2)))))
+
+(defun poly-multiply-one(L1 L2)
+	 (cond ((null L2) L2)
+		(t (cons(list (+ (caar L1) (caar L2)) (* (cadr(car L1)) (cadr(car L2)))) (poly-multiply-one L1 (cdr L2))))))
+
+(defun multiply (a b)
+	(if (eq a nil) 0
+		(+ (* (car a) (car b)) (multiply (cdr a) (cdr b)))))	
+
+(defun poly-der(L) 
+	(cond ((null L) L)
+		(t (cons (list (minus-one (caar L)) (multiply-function (caar L) (cadr(car L)))) (poly-der(cdr L))))))
+
+(defun power (a pow) 
+	(cond ((eq pow 0) 1)
+		(t (* a (power a (- pow 1)))))) 
+
+;from lecture's notes
+(defun my-length (L)
+	(cond ((null L) 0)
+		(t (+ 1 (my-length (cdr L))))))
+
+(defun poly-val(L x) 
+	(if (eq L nil) 0
+		(+ (* (cadr(car L)) (power x (caar L))) (poly-val (cdr L) x))))
+	
+
+
+(defun poly-prim(L) (cond
+	((null L) '((0 0)))
+	(t (cons (list (plus-one(caar L)) (divide-function (cadr(car L)) (plus-one (caar L)))) (poly-prim(cdr L)))))) 
+
+
+; your lecture's example
+(defun contains (s a) 
+	(cond ((null s) nil)
+		((equal (car s) a) t)
+		(t (contains (cdr s) a))))
+
+ 
+(defun last_element(L)
+       (if (and (listp L) (null (cdr L))) 
+		(car L) (last_element (cdr L))))
+
+(defun find_position(x L) 
+	(cond ((null L) 0)
+		((eq (car L) x) 0)
+		(t (+ 1 (find_position x (cdr L))))))
+
+; we should check for many elements and () as well
+(defun deep-subst(x y L) 
+	(cond ((null L) L)
+		((eq x (car L)) (cons y (cdr L)))
+		(t (cons (car L) (deep-subst x y (cdr L)))))) 
+	
+(defun occ(c)
+	 (cond ((eq 0 c) 0)
+		(t (+ 0 c))))
+
+(defun count-sub-list-occ(L1 L2) 
+	(cond ((null L1) 0)
+		((null L2) 0)
+		((not (contains L2 (car L1))) 0)
+		((not(contains L1 (cadr L1))) 0)
+		((not (eq (find_position (car L1) L2) (- (find_position (cadr L1) L2) 1))) 0)
+		((and (contains L2 (car L1)) (contains L2 (cadr L1)) (eq (find_position (car L1) L2) (- (find_position (cadr L1) L2) 1 ))) 1)
+		(t (+ 1 (count-sub-list-occ L1 (cdr L2))))))
+
+; from lecture notes
+(defun my-append (L1 L2)
+	(cond ((null L1) L2)
+		(t (cons (car L1) (my-append (cdr L1) L2)))))
+
+;check for number 12 and the second repetition
+(defun process_st-list(L) 
+	(cond ((null L) L)
+		((and (numberp (caar L)) (numberp (cadr(car L)))) (cons (list (caar L) (cadr(car L))) (cdr L)))
+		(t (cons (caar L) (process_st-list (cdr L))))))
+	
+(defun process_sn-list(Ln Lt)
+	(my-append (cons (caar Ln) Lt) (cons (last_element(last_element Ln)) () )))  
+
+
+(defun gen-pass (sn-list st-list subst-list) 
+	(cond ((null subst-list) (process_sn-list sn-list (process_st-list st-list)))
+		((null (cdr subst-list)) (deep-subst (caar subst-list) (cadr(car subst-list)) (process_sn-list sn-list (process_st-list st-list))))
+		(t (gen-pass sn-list st-list (cdr subst-list)))))	
